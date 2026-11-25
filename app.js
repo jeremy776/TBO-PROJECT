@@ -97,19 +97,19 @@
       pinBuffer = '';
       screenFeedback = {
         type: 'error',
-        text: 'Kartu ditahan & diblokir permanen (Trap State q₆).'
+        text: 'Kartu ditahan dan diblokir.'
       };
     } else if (record.input === 'pin_wrong') {
       pinBuffer = '';
       const left = STATES[record.to].attemptsLeft;
       screenFeedback = {
         type: 'warn',
-        text: `PIN salah! Tersisa ${left} kesempatan lagi.`
+        text: `PIN salah. Sisa ${left} percobaan.`
       };
     } else if (record.input === 'pin_invalid_fmt') {
       screenFeedback = {
         type: 'error',
-        text: 'Format ditolak: PIN harus tepat 6 digit angka.'
+        text: 'PIN harus 6 digit angka.'
       };
     }
 
@@ -137,7 +137,7 @@
       pinBuffer = '';
       screenFeedback = {
         type: 'error',
-        text: 'Akses terkunci! Trap state q₆ menolak semua verifikasi PIN.'
+        text: 'Kartu diblokir. Input tidak diproses.'
       };
       const record = fsm.submitPin(fsm.correctPin);
       handleTransition(record);
@@ -187,7 +187,7 @@
     const state = fsm.currentState;
     const info = STATES[state];
 
-    elAtmBadge.textContent = `${info.code} • ${info.label}`;
+    elAtmBadge.textContent = `${info.code}: ${info.label}`;
     elAtmBadge.className = `state-chip chip-${info.severity}`;
 
     elSlotLed.className = 'led';
@@ -195,25 +195,25 @@
 
     if (state === 'IDLE') {
       elSlotLed.classList.add('led-idle');
-      elSlotStatus.textContent = 'Slot Kartu Kosong';
-      elSlotHint.textContent = 'Masukkan kartu untuk memulai sesi validasi PIN';
+      elSlotStatus.textContent = 'Slot Kosong';
+      elSlotHint.textContent = 'Masukkan kartu untuk mulai';
       btnCardLabel.textContent = 'Masukkan Kartu';
       btnCardAction.classList.add('btn-primary');
     } else if (state === 'CARD_EJECTED') {
       elSlotLed.classList.add('led-ejected');
-      elSlotStatus.textContent = 'Kartu Keluar di Slot';
-      elSlotHint.textContent = 'Ambil kartu agar mesin kembali ke state IDLE';
+      elSlotStatus.textContent = 'Kartu Keluar';
+      elSlotHint.textContent = 'Ambil kartu dari slot';
       btnCardLabel.textContent = 'Ambil Kartu';
       btnCardAction.classList.add('btn-primary');
     } else if (state === 'BLOCKED') {
       elSlotLed.classList.add('led-blocked');
-      elSlotStatus.textContent = 'Kartu Ditahan & Diblokir';
-      elSlotHint.textContent = 'Trap state aktif — uji input atau klik Reset Admin Bank';
-      btnCardLabel.textContent = 'Uji Akses Terblokir';
+      elSlotStatus.textContent = 'Kartu Diblokir';
+      elSlotHint.textContent = 'Kartu diblokir. Gunakan Reset Bank untuk mengulang';
+      btnCardLabel.textContent = 'Uji Input Blokir';
     } else {
       elSlotLed.classList.add('led-active');
-      elSlotStatus.textContent = 'Kartu Terpasang Aman';
-      elSlotHint.textContent = state === 'AUTHENTICATED' ? 'Sesi nasabah terotorisasi' : 'Menunggu proses validasi PIN';
+      elSlotStatus.textContent = 'Kartu Terpasang';
+      elSlotHint.textContent = state === 'AUTHENTICATED' ? 'Sesi aktif' : 'Menunggu input PIN';
       btnCardLabel.textContent = 'Batalkan & Keluar';
     }
   }
@@ -230,45 +230,45 @@
     if (state === 'IDLE') {
       html = `
         <h3 class="screen-title">Selamat Datang</h3>
-        <p class="screen-desc">Silakan masukkan kartu ATM Anda pada slot di atas untuk memulai validasi keamanan.</p>
+        <p class="screen-desc">Silakan masukkan kartu ATM untuk memulai.</p>
         ${screenFeedback ? `<div class="screen-feedback feedback-warn">${escapeHtml(screenFeedback.text)}</div>` : ''}
       `;
     } else if (state === 'ATTEMPT_1' || state === 'ATTEMPT_2' || state === 'ATTEMPT_3') {
       const slots = Array.from({ length: 6 }, (_, i) => {
         const ch = pinBuffer[i];
         const filled = ch !== undefined;
-        const display = filled ? (showPin ? ch : '•') : '';
+        const display = filled ? (showPin ? ch : '*') : '';
         return `<div class="pin-slot ${filled ? 'is-filled' : ''}">${display}</div>`;
       }).join('');
 
       const attemptNum = state === 'ATTEMPT_1' ? 1 : state === 'ATTEMPT_2' ? 2 : 3;
       html = `
-        <h3 class="screen-title">Masukkan 6-Digit PIN</h3>
-        <p class="screen-desc">Percobaan ke-${attemptNum} dari 3. Tekan <strong>ENTER</strong> untuk verifikasi.</p>
+        <h3 class="screen-title">Masukkan 6 Digit PIN</h3>
+        <p class="screen-desc">Percobaan ${attemptNum} dari 3. Tekan <strong>ENTER</strong> untuk verifikasi.</p>
         <div class="pin-slots" aria-label="Digit PIN">${slots}</div>
         ${screenFeedback ? `<div class="screen-feedback feedback-${screenFeedback.type === 'error' ? 'error' : 'warn'}">${escapeHtml(screenFeedback.text)}</div>` : ''}
       `;
     } else if (state === 'AUTHENTICATED') {
       html = `
-        <h3 class="screen-title" style="color:#34d399;">Akses Diterima (PIN Valid)</h3>
-        <div class="auth-balance-box">${escapeHtml(activeMenuMessage || 'Otorisasi berhasil.')}</div>
+        <h3 class="screen-title" style="color:#059669;">PIN Benar</h3>
+        <div class="auth-balance-box">${escapeHtml(activeMenuMessage || 'PIN terverifikasi.')}</div>
         <div class="auth-menu-grid">
           <button type="button" class="auth-action-btn" data-atm-menu="balance">Cek Saldo</button>
-          <button type="button" class="auth-action-btn" data-atm-menu="withdraw">Tarik Rp 500rb</button>
-          <button type="button" class="auth-action-btn" data-atm-menu="transfer">Info Keamanan</button>
-          <button type="button" class="auth-action-btn" data-atm-menu="logout">Keluar / Eject</button>
+          <button type="button" class="auth-action-btn" data-atm-menu="withdraw">Tarik Tunai</button>
+          <button type="button" class="auth-action-btn" data-atm-menu="transfer">Informasi</button>
+          <button type="button" class="auth-action-btn" data-atm-menu="logout">Keluar</button>
         </div>
       `;
     } else if (state === 'CARD_EJECTED') {
       html = `
-        <h3 class="screen-title" style="color:#38bdf8;">Sesi Diakhiri Dengan Aman</h3>
-        <p class="screen-desc">Kartu ATM Anda telah dikeluarkan. Klik <strong>"Ambil Kartu"</strong> untuk menyelesaikan transaksi.</p>
+        <h3 class="screen-title" style="color:#0284c7;">Kartu Keluar</h3>
+        <p class="screen-desc">Kartu telah dikeluarkan. Silakan ambil kartu Anda.</p>
       `;
     } else if (state === 'BLOCKED') {
       html = `
-        <h3 class="screen-title" style="color:#fca5a5;">AKSES DIBLOKIR (TRAP STATE)</h3>
-        <p class="screen-desc">PIN salah 3x berturut-turut. Demi mencegah serangan <em>brute-force</em>, kartu ditahan di state <code>q₆</code>.</p>
-        <div class="screen-feedback feedback-error">${escapeHtml(screenFeedback ? screenFeedback.text : 'Gunakan Reset Admin Bank untuk membuka blokir.')}</div>
+        <h3 class="screen-title" style="color:#dc2626;">KARTU DIBLOKIR</h3>
+        <p class="screen-desc">PIN salah 3 kali berturut-turut. Kartu ditahan oleh sistem.</p>
+        <div class="screen-feedback feedback-error">${escapeHtml(screenFeedback ? screenFeedback.text : 'Gunakan Reset Bank untuk mengulang simulasi.')}</div>
       `;
     }
 
@@ -303,20 +303,20 @@
       elAttemptText.textContent = 'Siap (3/3 Kesempatan)';
       elBars.forEach((b) => b.classList.add('bar-ok'));
     } else if (state === 'ATTEMPT_1') {
-      elAttemptText.textContent = '3/3 Kesempatan Tersisa';
+      elAttemptText.textContent = '3 percobaan tersisa';
       elBars.forEach((b) => b.classList.add('bar-ok'));
     } else if (state === 'ATTEMPT_2') {
-      elAttemptText.textContent = '2/3 Kesempatan Tersisa';
+      elAttemptText.textContent = '2 percobaan tersisa';
       elBars[0].classList.add('bar-warn');
       elBars[1].classList.add('bar-warn');
     } else if (state === 'ATTEMPT_3') {
-      elAttemptText.textContent = '1/3 Kesempatan Terakhir!';
+      elAttemptText.textContent = '1 percobaan tersisa';
       elBars[0].classList.add('bar-danger');
     } else if (state === 'AUTHENTICATED') {
-      elAttemptText.textContent = 'Terautentikasi Aman';
+      elAttemptText.textContent = 'Akses diterima';
       elBars.forEach((b) => b.classList.add('bar-ok'));
     } else if (state === 'BLOCKED') {
-      elAttemptText.textContent = '0/3 • TERBLOKIR (q₆)';
+      elAttemptText.textContent = '0/3 Terblokir (q6)';
       elBars.forEach((b) => b.classList.add('bar-blocked'));
     }
   }
@@ -332,8 +332,8 @@
     elBanner.className = 'transition-banner';
     if (!lastRecord) {
       elBanner.innerHTML = `
-        <span class="mono banner-formula">δ(q₀, —) = q₀</span>
-        <span class="banner-note">Siap menerima kartu ATM. Klik "Masukkan Kartu" atau pilih skenario demo.</span>
+        <span class="mono banner-formula">δ(q0, start) = q0</span>
+        <span class="banner-note">Mesin siap. Masukkan kartu atau pilih skenario.</span>
       `;
       return;
     }
@@ -378,13 +378,13 @@
             else if (targetKey === 'CARD_EJECTED') shortTag = `${targetCode} (Out)`;
             else if (targetKey === 'BLOCKED') shortTag = `${targetCode} (Blok)`;
 
-            return `<td class="${cellClass}" title="${stateKey} + ${sym} → ${targetKey}">${shortTag}</td>`;
+            return `<td class="${cellClass}" title="${stateKey} + ${sym} -> ${targetKey}">${shortTag}</td>`;
           })
           .join('');
 
         return `
           <tr class="${isCurrentRow ? 'is-current-row' : ''}">
-            <td>${info.code} • ${info.label}</td>
+            <td>${info.code}: ${info.label}</td>
             ${cellsHtml}
           </tr>
         `;
@@ -398,7 +398,7 @@
     elLogCountBadge.textContent = String(fsm.history.length);
 
     if (fsm.history.length === 0) {
-      elLogsList.innerHTML = `<div class="empty-logs">Belum ada transisi tercatat. Mulai dengan memasukkan kartu ATM.</div>`;
+      elLogsList.innerHTML = `<div class="empty-logs">Belum ada transisi.</div>`;
       return;
     }
 
@@ -413,7 +413,7 @@
           <div class="log-item ${severityClass}">
             <span class="log-step">#${String(item.step).padStart(2, '0')}</span>
             <div>
-              <div class="log-formula">δ(${escapeHtml(item.fromCode)} ${escapeHtml(item.from)}, ${escapeHtml(item.input)}) → ${escapeHtml(item.toCode)} ${escapeHtml(item.to)}</div>
+              <div class="log-formula">δ(${escapeHtml(item.fromCode)}, ${escapeHtml(item.input)}) -> ${escapeHtml(item.toCode)}</div>
               <div class="log-note">${escapeHtml(item.note)}</div>
             </div>
             <span class="log-time">${escapeHtml(item.timestamp)}</span>
@@ -447,17 +447,17 @@
 
     const labelGroup = document.querySelector(`.edge-label-group[data-edge="${record.edgeId}"]`);
     let activeClass = 'is-active-edge';
-    let dotColor = '#38bdf8';
-    let haloColor = 'rgba(56, 189, 248, 0.28)';
+    let dotColor = '#0284c7';
+    let haloColor = 'rgba(2, 132, 199, 0.2)';
 
     if (record.to === 'BLOCKED') {
       activeClass = 'is-active-edge-danger';
-      dotColor = '#ef4444';
-      haloColor = 'rgba(239, 68, 68, 0.34)';
+      dotColor = '#dc2626';
+      haloColor = 'rgba(220, 38, 38, 0.2)';
     } else if (record.to === 'AUTHENTICATED') {
       activeClass = 'is-active-edge-success';
-      dotColor = '#10b981';
-      haloColor = 'rgba(16, 185, 129, 0.32)';
+      dotColor = '#059669';
+      haloColor = 'rgba(5, 150, 105, 0.2)';
     }
 
     edgeEl.classList.add(activeClass);
@@ -654,13 +654,13 @@
         type: 'info',
         text: `PIN demo diperbarui menjadi ${val}.`
       };
-      elTargetPinInput.style.backgroundColor = '#143228';
+      elTargetPinInput.style.backgroundColor = '#d1fae5';
       setTimeout(() => {
         elTargetPinInput.style.backgroundColor = '';
       }, 900);
       renderAtmScreen();
     } else {
-      elTargetPinInput.style.backgroundColor = '#36191d';
+      elTargetPinInput.style.backgroundColor = '#fee2e2';
       alert('PIN demo harus tepat 6 digit angka (contoh: 123456).');
     }
   });

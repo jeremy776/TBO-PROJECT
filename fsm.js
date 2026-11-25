@@ -21,65 +21,65 @@
       shortLabel: 'Siap',
       type: 'initial',
       severity: 'neutral',
-      description: 'Mesin ATM siap menerima kartu nasabah.'
+      description: 'Mesin siap menerima kartu.'
     },
     ATTEMPT_1: {
       id: 'ATTEMPT_1',
       code: 'q1',
       label: 'ATTEMPT_1',
-      shortLabel: 'Coba 1/3',
+      shortLabel: 'Coba 1',
       type: 'intermediate',
       severity: 'info',
       attemptsLeft: 3,
-      description: 'Kartu terdeteksi. Menunggu input PIN (Percobaan ke-1 dari 3).'
+      description: 'Kartu masuk. Masukkan PIN percobaan 1.'
     },
     ATTEMPT_2: {
       id: 'ATTEMPT_2',
       code: 'q2',
       label: 'ATTEMPT_2',
-      shortLabel: 'Coba 2/3',
+      shortLabel: 'Coba 2',
       type: 'intermediate',
       severity: 'warning',
       attemptsLeft: 2,
-      description: 'PIN salah 1x. Kesempatan tersisa 2 kali.'
+      description: 'PIN salah. Sisa 2 percobaan.'
     },
     ATTEMPT_3: {
       id: 'ATTEMPT_3',
       code: 'q3',
       label: 'ATTEMPT_3',
-      shortLabel: 'Coba 3/3',
+      shortLabel: 'Coba 3',
       type: 'intermediate',
       severity: 'danger',
       attemptsLeft: 1,
-      description: 'Peringatan: PIN salah 2x! Kesempatan terakhir sebelum pemblokiran.'
+      description: 'PIN salah 2 kali. Sisa 1 percobaan.'
     },
     AUTHENTICATED: {
       id: 'AUTHENTICATED',
       code: 'q4',
       label: 'AUTHENTICATED',
-      shortLabel: 'Akses Sah',
+      shortLabel: 'Berhasil',
       type: 'accepting',
       severity: 'success',
-      description: 'PIN valid. Akses keamanan diberikan ke menu transaksi ATM.'
+      description: 'PIN benar. Akses menu dibuka.'
     },
     CARD_EJECTED: {
       id: 'CARD_EJECTED',
       code: 'q5',
       label: 'CARD_EJECTED',
-      shortLabel: 'Kartu Keluar',
+      shortLabel: 'Keluar',
       type: 'accepting',
       severity: 'info',
-      description: 'Sesi diakhiri dengan aman. Silakan ambil kartu Anda.'
+      description: 'Sesi selesai. Silakan ambil kartu.'
     },
     BLOCKED: {
       id: 'BLOCKED',
       code: 'q6',
       label: 'BLOCKED',
-      shortLabel: 'Terblokir',
+      shortLabel: 'Diblokir',
       type: 'trap',
       severity: 'blocked',
       attemptsLeft: 0,
-      description: 'TRAP STATE: Salah PIN 3x berturut-turut. Kartu diblokir untuk mencegah brute-force.'
+      description: 'PIN salah 3 kali. Kartu diblokir.'
     }
   };
 
@@ -175,38 +175,38 @@
 
   function buildTransitionNote(fromState, inputSymbol, toState) {
     if (fromState === 'BLOCKED') {
-      return `Akses ditolak! Trap state q6 mengunci seluruh input (${inputSymbol}).`;
+      return `Kartu diblokir. Input diabaikan.`;
     }
     if (fromState === 'IDLE' && toState === 'ATTEMPT_1') {
-      return 'Kartu diterima. Sistem masuk ke tahap validasi PIN (1/3).';
+      return 'Kartu masuk. Masukkan PIN.';
     }
     if (inputSymbol === 'pin_valid' && toState === 'AUTHENTICATED') {
-      return 'PIN cocok! Otorisasi berhasil, akses menu transaksi dibuka.';
+      return 'PIN benar. Akses dibuka.';
     }
     if (inputSymbol === 'pin_wrong' && toState === 'ATTEMPT_2') {
-      return 'PIN salah (1/3). Counter keamanan naik, sisa 2 percobaan.';
+      return 'PIN salah. Sisa 2 percobaan.';
     }
     if (inputSymbol === 'pin_wrong' && toState === 'ATTEMPT_3') {
-      return 'PIN salah (2/3). Peringatan terakhir, sisa 1 percobaan.';
+      return 'PIN salah 2 kali. Sisa 1 percobaan.';
     }
     if (inputSymbol === 'pin_wrong' && toState === 'BLOCKED') {
-      return 'BAHAYA: Salah PIN 3x berturut-turut! Masuk ke Trap State BLOCKED.';
+      return 'PIN salah 3 kali. Kartu diblokir.';
     }
     if (inputSymbol === 'pin_invalid_fmt' && fromState === toState) {
-      return 'Format PIN tidak valid (harus 6 digit angka). State tetap terjaga.';
+      return 'Format PIN salah. Harus 6 digit angka.';
     }
     if (inputSymbol === 'cancel' && toState === 'CARD_EJECTED') {
       return fromState === 'AUTHENTICATED'
-        ? 'Nasabah mengakhiri sesi. Kartu dikeluarkan dengan aman.'
-        : 'Validasi PIN dibatalkan. Kartu dikeluarkan dengan aman.';
+        ? 'Sesi selesai. Kartu keluar.'
+        : 'Transaksi dibatalkan. Kartu keluar.';
     }
     if (inputSymbol === 'take_card' && toState === 'IDLE') {
-      return 'Kartu diambil nasabah. Mesin kembali ke state awal IDLE (q0).';
+      return 'Kartu diambil. Mesin kembali siap.';
     }
     if (fromState === toState) {
-      return `Input '${inputSymbol}' diabaikan pada state ${STATES[fromState].code} (${fromState}).`;
+      return `Input '${inputSymbol}' diabaikan pada state ${STATES[fromState].code}.`;
     }
-    return `Transisi dari ${fromState} ke ${toState} melalui '${inputSymbol}'.`;
+    return `Transisi: ${fromState} ke ${toState} via '${inputSymbol}'.`;
   }
 
   class ATMStateMachine {
@@ -296,7 +296,7 @@
         toCode: 'q0',
         changed: fromState !== 'IDLE',
         edgeId: null,
-        note: 'Reset Admin Bank: Mesin dipulihkan ke state awal q0 (IDLE).',
+        note: 'Reset bank: Mesin kembali ke state IDLE.',
         meta: { outOfBand: true },
         timestamp: new Date().toLocaleTimeString('id-ID', { hour12: false })
       };

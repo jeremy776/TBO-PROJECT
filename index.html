@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ATM PIN Security — Finite State Machine (DFA) Simulator</title>
+  <title>Validasi PIN ATM - Finite State Machine</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -24,23 +24,23 @@
           </svg>
         </div>
         <div>
-          <h1>Sistem Validasi PIN ATM <span class="badge-dfa">FSM / DFA</span></h1>
-          <p class="subtitle">Simulasi Pencegahan Keamanan Akses &amp; Visualisasi State Transition Interaktif</p>
+          <h1>Validasi PIN ATM <span class="badge-dfa">FSM</span></h1>
+          <p class="subtitle">Simulasi validasi PIN menggunakan Finite State Machine</p>
         </div>
       </div>
 
       <div class="topbar-actions">
         <div class="tuple-pill" title="Definisi 5-Tuple DFA">
           <span class="mono">M = (Q, Σ, δ, q₀, F)</span>
-          <span class="dot-sep" aria-hidden="true">•</span>
-          <span>7 States, 6 Inputs</span>
+          <span class="dot-sep" aria-hidden="true">|</span>
+          <span>7 State, 6 Input</span>
         </div>
-        <button type="button" id="btn-admin-reset" class="btn btn-admin" title="Reset sistem dari luar sesi nasabah (Aksi Admin Bank)">
+        <button type="button" id="btn-admin-reset" class="btn btn-admin" title="Reset mesin ke state awal IDLE">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
             <path d="M3 3v5h5" />
           </svg>
-          <span>Reset Admin Bank</span>
+          <span>Reset Bank</span>
         </button>
       </div>
     </header>
@@ -55,9 +55,9 @@
               <rect x="2" y="4" width="20" height="16" rx="2" />
               <path d="M2 10h20" />
             </svg>
-            <h2>Terminal ATM</h2>
+            <h2>Mesin ATM</h2>
           </div>
-          <span id="atm-state-badge" class="state-chip chip-neutral">q0 • IDLE</span>
+          <span id="atm-state-badge" class="state-chip chip-neutral">q0: IDLE</span>
         </div>
 
         <!-- Card Slot Hardware Control -->
@@ -65,9 +65,9 @@
           <div class="card-slot-info">
             <div class="slot-indicator">
               <span id="slot-led" class="led led-idle" aria-hidden="true"></span>
-              <span id="slot-status-text" class="slot-label">Slot Kartu Kosong</span>
+              <span id="slot-status-text" class="slot-label">Slot Kosong</span>
             </div>
-            <p class="slot-hint" id="slot-hint-text">Klik tombol untuk memasukkan kartu ATM</p>
+            <p class="slot-hint" id="slot-hint-text">Masukkan kartu untuk memulai</p>
           </div>
           <button type="button" id="btn-card-action" class="btn btn-primary btn-card">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -82,7 +82,7 @@
         <div class="atm-bezel">
           <div id="atm-screen" class="atm-screen screen-neutral" role="status" aria-live="polite">
             <div class="screen-top">
-              <span class="bank-mark">BANK OTOMATA SECURE ATM</span>
+              <span class="bank-mark">ATM BANK OTOMATA</span>
               <span id="screen-code-pill" class="mono screen-state-tag">STATE: q0</span>
             </div>
 
@@ -93,8 +93,8 @@
             <!-- Attempt Security Meter -->
             <div class="security-meter" aria-label="Indikator Keamanan Percobaan PIN">
               <div class="meter-header">
-                <span>Status Keamanan Akses</span>
-                <span id="attempt-counter-text" class="mono">Siap (3/3 Kesempatan)</span>
+                <span>Sisa Percobaan</span>
+                <span id="attempt-counter-text" class="mono">3 percobaan tersisa</span>
               </div>
               <div class="meter-bars">
                 <div id="bar-1" class="meter-bar"></div>
@@ -163,7 +163,7 @@
             </div>
           </div>
           <p class="keyboard-hint">
-            Tip: Bisa pakai keyboard fisik (<code>0–9</code>, <code>Backspace</code>, <code>Enter</code>, <code>Esc</code>). Tekan <code>Enter</code> saat digit &lt; 6 untuk menguji transisi <code>pin_invalid_fmt</code>.
+            Tip: Gunakan tombol angka atau keyboard (0-9, Backspace, Enter, Esc). Tekan Enter saat digit kurang dari 6 untuk menguji pin_invalid_fmt.
           </p>
         </div>
       </section>
@@ -181,29 +181,29 @@
                 <path d="M8.5 7.5L10.8 15.2" />
                 <path d="M15.5 7.5L13.2 15.2" />
               </svg>
-              <h2>Diagram Transisi State (Live FSM)</h2>
+              <h2>Diagram State FSM</h2>
             </div>
 
             <div class="legend-row" aria-label="Legenda State">
               <span class="legend-item"><i class="dot dot-active"></i> Aktif</span>
-              <span class="legend-item"><i class="dot dot-accept"></i> Accepting (F)</span>
-              <span class="legend-item"><i class="dot dot-trap"></i> Trap State (Blokir)</span>
+              <span class="legend-item"><i class="dot dot-accept"></i> State Akhir (F)</span>
+              <span class="legend-item"><i class="dot dot-trap"></i> Terblokir</span>
             </div>
           </div>
 
           <!-- Scenario Quick Runner -->
           <div class="scenario-bar" role="group" aria-label="Skenario Uji Otomatis">
-            <span class="scenario-label">Demo Otomatis:</span>
+            <span class="scenario-label">Skenario:</span>
             <button type="button" class="btn btn-chip" data-scenario="success">1. PIN Benar</button>
-            <button type="button" class="btn btn-chip" data-scenario="retry_success">2. Salah 2x → Benar</button>
-            <button type="button" class="btn btn-chip btn-chip-danger" data-scenario="bruteforce">3. Salah 3x → Trap Blokir</button>
-            <button type="button" class="btn btn-chip" data-scenario="cancel_flow">4. Batal (Cancel)</button>
+            <button type="button" class="btn btn-chip" data-scenario="retry_success">2. Salah 2x Lalu Benar</button>
+            <button type="button" class="btn btn-chip btn-chip-danger" data-scenario="bruteforce">3. Salah 3x (Blokir)</button>
+            <button type="button" class="btn btn-chip" data-scenario="cancel_flow">4. Batal</button>
           </div>
 
           <!-- Live Transition Banner -->
           <div id="transition-banner" class="transition-banner">
-            <span class="mono banner-formula">δ(q₀, —) = q₀</span>
-            <span class="banner-note">Siap menerima kartu ATM. Klik "Masukkan Kartu" atau pilih skenario demo.</span>
+            <span class="mono banner-formula">δ(q0, start) = q0</span>
+            <span class="banner-note">Mesin siap. Masukkan kartu atau pilih skenario di atas.</span>
           </div>
 
           <!-- Animated SVG Diagram -->
@@ -211,16 +211,16 @@
             <svg id="fsm-svg" viewBox="0 0 780 490" role="img" aria-label="Diagram Transisi Finite State Machine Validasi PIN ATM">
               <defs>
                 <marker id="arrow-default" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
-                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#64748b" />
+                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#94a3b8" />
                 </marker>
                 <marker id="arrow-active" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#38bdf8" />
+                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#0284c7" />
                 </marker>
                 <marker id="arrow-danger" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#ef4444" />
+                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#dc2626" />
                 </marker>
                 <marker id="arrow-success" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#10b981" />
+                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#059669" />
                 </marker>
               </defs>
 
@@ -356,7 +356,7 @@
                   <circle cx="270" cy="230" r="42" class="node-pulse-ring" />
                   <circle cx="270" cy="230" r="36" class="node-circle" />
                   <text x="270" y="224" class="node-code" text-anchor="middle">q₁</text>
-                  <text x="270" y="241" class="node-name" text-anchor="middle">COBA 1/3</text>
+                  <text x="270" y="241" class="node-name" text-anchor="middle">COBA 1</text>
                 </g>
 
                 <!-- q2: ATTEMPT_2 -->
@@ -364,7 +364,7 @@
                   <circle cx="440" cy="230" r="42" class="node-pulse-ring" />
                   <circle cx="440" cy="230" r="36" class="node-circle" />
                   <text x="440" y="224" class="node-code" text-anchor="middle">q₂</text>
-                  <text x="440" y="241" class="node-name" text-anchor="middle">COBA 2/3</text>
+                  <text x="440" y="241" class="node-name" text-anchor="middle">COBA 2</text>
                 </g>
 
                 <!-- q3: ATTEMPT_3 -->
@@ -372,7 +372,7 @@
                   <circle cx="610" cy="230" r="42" class="node-pulse-ring" />
                   <circle cx="610" cy="230" r="36" class="node-circle" />
                   <text x="610" y="224" class="node-code" text-anchor="middle">q₃</text>
-                  <text x="610" y="241" class="node-name" text-anchor="middle">COBA 3/3</text>
+                  <text x="610" y="241" class="node-name" text-anchor="middle">COBA 3</text>
                 </g>
 
                 <!-- q4: AUTHENTICATED (Accepting Double Ring) -->
@@ -381,7 +381,7 @@
                   <circle cx="440" cy="78" r="38" class="node-circle" />
                   <circle cx="440" cy="78" r="32" class="node-inner-ring" />
                   <text x="440" y="72" class="node-code" text-anchor="middle">q₄</text>
-                  <text x="440" y="89" class="node-name" text-anchor="middle">AKSES SAH</text>
+                  <text x="440" y="89" class="node-name" text-anchor="middle">BERHASIL</text>
                 </g>
 
                 <!-- q5: CARD_EJECTED (Accepting Exit Double Ring) -->
@@ -390,7 +390,7 @@
                   <circle cx="210" cy="405" r="36" class="node-circle" />
                   <circle cx="210" cy="405" r="30" class="node-inner-ring" />
                   <text x="210" y="399" class="node-code" text-anchor="middle">q₅</text>
-                  <text x="210" y="416" class="node-name" text-anchor="middle">EJECTED</text>
+                  <text x="210" y="416" class="node-name" text-anchor="middle">KELUAR</text>
                 </g>
 
                 <!-- q6: BLOCKED (Trap State) -->
@@ -399,7 +399,7 @@
                   <circle cx="625" cy="405" r="38" class="node-circle" />
                   <circle cx="625" cy="405" r="31" class="node-trap-ring" />
                   <text x="625" y="399" class="node-code" text-anchor="middle">q₆</text>
-                  <text x="625" y="416" class="node-name" text-anchor="middle">BLOCKED</text>
+                  <text x="625" y="416" class="node-name" text-anchor="middle">DIBLOKIR</text>
                 </g>
               </g>
 
@@ -416,13 +416,13 @@
         <div class="panel inspector-panel">
           <div class="tabs-header" role="tablist" aria-label="Inspeksi Model FSM">
             <button type="button" class="tab-btn is-active" role="tab" aria-selected="true" data-tab="tab-table">
-              Tabel Transisi (δ)
+              Tabel Transisi
             </button>
             <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="tab-logs">
-              Log Jejak Eksekusi <span id="log-count-badge" class="count-pill">0</span>
+              Log Transisi <span id="log-count-badge" class="count-pill">0</span>
             </button>
             <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="tab-formal">
-              Spesifikasi 5-Tuple &amp; Keamanan
+              Spesifikasi Formal
             </button>
           </div>
 
@@ -451,14 +451,14 @@
           <!-- Tab 2: Execution Logs -->
           <div id="tab-logs" class="tab-content" role="tabpanel" hidden>
             <div class="logs-toolbar">
-              <span class="logs-hint">Riwayat evaluasi fungsi transisi <code>δ(state, input) → nextState</code></span>
+              <span class="logs-hint">Riwayat transisi state</span>
               <div class="logs-actions">
                 <button type="button" id="btn-copy-logs" class="btn btn-sm">Salin Log</button>
                 <button type="button" id="btn-clear-logs" class="btn btn-sm btn-ghost">Bersihkan</button>
               </div>
             </div>
             <div id="logs-list" class="logs-list">
-              <div class="empty-logs">Belum ada transisi tercatat. Mulai dengan memasukkan kartu ATM.</div>
+              <div class="empty-logs">Belum ada transisi.</div>
             </div>
           </div>
 
@@ -466,22 +466,22 @@
           <div id="tab-formal" class="tab-content" role="tabpanel" hidden>
             <div class="formal-grid">
               <div class="formal-card">
-                <h3>Definisi Formal DFA: <code>M = (Q, Σ, δ, q₀, F)</code></h3>
+                <h3>Definisi Formal: <code>M = (Q, Σ, δ, q₀, F)</code></h3>
                 <ul class="formal-list">
-                  <li><strong>Q (States):</strong> <code>{q₀ IDLE, q₁ ATTEMPT_1, q₂ ATTEMPT_2, q₃ ATTEMPT_3, q₄ AUTHENTICATED, q₅ CARD_EJECTED, q₆ BLOCKED}</code></li>
+                  <li><strong>Q (Himpunan State):</strong> <code>{q0, q1, q2, q3, q4, q5, q6}</code></li>
                   <li><strong>Σ (Alfabet Input):</strong> <code>{insert_card, pin_valid, pin_wrong, pin_invalid_fmt, cancel, take_card}</code></li>
-                  <li><strong>q₀ (State Awal):</strong> <code>q₀ (IDLE)</code></li>
-                  <li><strong>F (Accepting States):</strong> <code>{q₄ (AUTHENTICATED), q₅ (CARD_EJECTED)}</code></li>
-                  <li><strong>δ (Fungsi Transisi):</strong> Pemetaan deterministik total <code>Q × Σ → Q</code></li>
+                  <li><strong>q₀ (State Awal):</strong> <code>q0 (IDLE)</code></li>
+                  <li><strong>F (State Akhir):</strong> <code>{q4, q5}</code></li>
+                  <li><strong>δ (Fungsi Transisi):</strong> Pemetaan <code>Q × Σ -> Q</code></li>
                 </ul>
               </div>
               <div class="formal-card formal-security">
-                <h3>Mekanisme Pencegahan Keamanan Akses</h3>
+                <h3>Aturan Validasi PIN</h3>
                 <ul class="formal-list">
-                  <li><strong>Anti Brute-Force (Max 3 Percobaan):</strong> Kesalahan PIN menggeser state secara bertahap <code>q₁ → q₂ → q₃ → q₆</code>. Penyerang tidak dapat menebak tanpa batas.</li>
-                  <li><strong>Trap State / Dead State (q₆ BLOCKED):</strong> Setelah masuk ke <code>q₆</code>, setiap simbol input <code>∀ x ∈ Σ</code> hanya berputar kembali ke <code>q₆</code>. Akses terkunci permanen hingga verifikasi Admin Bank.</li>
-                  <li><strong>Validasi Format Input:</strong> Input yang bukan 6 digit angka memicu <code>pin_invalid_fmt</code> (self-loop) sehingga format ilegal ditolak sebelum verifikasi inti.</li>
-                  <li><strong>Fail-Safe Exit:</strong> Tombol <code>cancel</code> langsung mengarahkan sesi ke <code>q₅ (CARD_EJECTED)</code> agar akses tidak dibiarkan terbuka.</li>
+                  <li><strong>Maksimal 3 Percobaan:</strong> Setiap kesalahan PIN memindahkan state dari q1 ke q2, lalu ke q3, dan akhirnya ke q6.</li>
+                  <li><strong>State Pemblokiran (q6):</strong> Pada q6, seluruh input nasabah tetap berada di q6 sehingga akses terkunci.</li>
+                  <li><strong>Validasi Format:</strong> Input yang tidak sesuai format 6 digit angka menghasilkan transisi self-loop pada state saat ini.</li>
+                  <li><strong>Pembatalan:</strong> Tombol cancel memindahkan state ke q5 (kartu keluar).</li>
                 </ul>
               </div>
             </div>
