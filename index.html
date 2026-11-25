@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATM PIN Security — Finite State Machine (DFA) Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Header -->
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+        </div>
+        <div>
+          <h1>Sistem Validasi PIN ATM <span class="badge-dfa">FSM / DFA</span></h1>
+          <p class="subtitle">Simulasi Pencegahan Keamanan Akses &amp; Visualisasi State Transition Interaktif</p>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="tuple-pill" title="Definisi 5-Tuple DFA">
+          <span class="mono">M = (Q, Σ, δ, q₀, F)</span>
+          <span class="dot-sep" aria-hidden="true">•</span>
+          <span>7 States, 6 Inputs</span>
+        </div>
+        <button type="button" id="btn-admin-reset" class="btn btn-admin" title="Reset sistem dari luar sesi nasabah (Aksi Admin Bank)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <span>Reset Admin Bank</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main 2-Column Workspace -->
+    <main class="workspace">
+      <!-- LEFT COLUMN: ATM Hardware & Security Panel -->
+      <section class="panel atm-panel" aria-label="Simulator Mesin ATM">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="M2 10h20" />
+            </svg>
+            <h2>Terminal ATM</h2>
+          </div>
+          <span id="atm-state-badge" class="state-chip chip-neutral">q0 • IDLE</span>
+        </div>
+
+        <!-- Card Slot Hardware Control -->
+        <div class="card-slot-box">
+          <div class="card-slot-info">
+            <div class="slot-indicator">
+              <span id="slot-led" class="led led-idle" aria-hidden="true"></span>
+              <span id="slot-status-text" class="slot-label">Slot Kartu Kosong</span>
+            </div>
+            <p class="slot-hint" id="slot-hint-text">Klik tombol untuk memasukkan kartu ATM</p>
+          </div>
+          <button type="button" id="btn-card-action" class="btn btn-primary btn-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <line x1="2" y1="10" x2="22" y2="10" />
+            </svg>
+            <span id="btn-card-label">Masukkan Kartu</span>
+          </button>
+        </div>
+
+        <!-- ATM CRT / OLED Screen -->
+        <div class="atm-bezel">
+          <div id="atm-screen" class="atm-screen screen-neutral" role="status" aria-live="polite">
+            <div class="screen-top">
+              <span class="bank-mark">BANK OTOMATA SECURE ATM</span>
+              <span id="screen-code-pill" class="mono screen-state-tag">STATE: q0</span>
+            </div>
+
+            <div class="screen-body" id="screen-body">
+              <!-- Dynamic content rendered by app.js -->
+            </div>
+
+            <!-- Attempt Security Meter -->
+            <div class="security-meter" aria-label="Indikator Keamanan Percobaan PIN">
+              <div class="meter-header">
+                <span>Status Keamanan Akses</span>
+                <span id="attempt-counter-text" class="mono">Siap (3/3 Kesempatan)</span>
+              </div>
+              <div class="meter-bars">
+                <div id="bar-1" class="meter-bar"></div>
+                <div id="bar-2" class="meter-bar"></div>
+                <div id="bar-3" class="meter-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keypad + Action Keys -->
+        <div class="keypad-wrapper">
+          <div class="keypad-grid" role="group" aria-label="Keypad Numerik ATM">
+            <button type="button" class="key-btn" data-key="1">1</button>
+            <button type="button" class="key-btn" data-key="2">2</button>
+            <button type="button" class="key-btn" data-key="3">3</button>
+            <button type="button" class="key-btn key-action key-cancel" id="key-cancel">
+              <span>CANCEL</span>
+              <small>Esc</small>
+            </button>
+
+            <button type="button" class="key-btn" data-key="4">4</button>
+            <button type="button" class="key-btn" data-key="5">5</button>
+            <button type="button" class="key-btn" data-key="6">6</button>
+            <button type="button" class="key-btn key-action key-clear" id="key-clear">
+              <span>CLEAR</span>
+              <small>Bksp</small>
+            </button>
+
+            <button type="button" class="key-btn" data-key="7">7</button>
+            <button type="button" class="key-btn" data-key="8">8</button>
+            <button type="button" class="key-btn" data-key="9">9</button>
+            <button type="button" class="key-btn key-action key-enter" id="key-enter">
+              <span>ENTER</span>
+              <small>↵</small>
+            </button>
+
+            <button type="button" class="key-btn key-muted" id="key-invalid-test" title="Kirim format PIN tidak valid (< 6 digit) untuk menguji pin_invalid_fmt">
+              <span class="mini-label">FMT ERR</span>
+            </button>
+            <button type="button" class="key-btn" data-key="0">0</button>
+            <button type="button" class="key-btn key-muted" id="key-toggle-pin" title="Tampilkan / sembunyikan PIN yang diketik">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Demo Config Bar -->
+        <div class="demo-config">
+          <div class="pin-config-row">
+            <label for="input-target-pin">PIN Terdaftar (Demo):</label>
+            <div class="pin-input-group">
+              <input
+                type="text"
+                id="input-target-pin"
+                class="mono"
+                maxlength="6"
+                value="123456"
+                inputmode="numeric"
+                aria-label="PIN ATM terdaftar untuk simulasi"
+              />
+              <button type="button" id="btn-save-pin" class="btn btn-sm">Set</button>
+            </div>
+          </div>
+          <p class="keyboard-hint">
+            Tip: Bisa pakai keyboard fisik (<code>0–9</code>, <code>Backspace</code>, <code>Enter</code>, <code>Esc</code>). Tekan <code>Enter</code> saat digit &lt; 6 untuk menguji transisi <code>pin_invalid_fmt</code>.
+          </p>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: Live FSM Visualizer + Academic Inspector -->
+      <section class="right-column">
+        <!-- Diagram Card -->
+        <div class="panel diagram-panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="6" cy="6" r="3" />
+                <circle cx="18" cy="6" r="3" />
+                <circle cx="12" cy="18" r="3" />
+                <path d="M8.5 7.5L10.8 15.2" />
+                <path d="M15.5 7.5L13.2 15.2" />
+              </svg>
+              <h2>Diagram Transisi State (Live FSM)</h2>
+            </div>
+
+            <div class="legend-row" aria-label="Legenda State">
+              <span class="legend-item"><i class="dot dot-active"></i> Aktif</span>
+              <span class="legend-item"><i class="dot dot-accept"></i> Accepting (F)</span>
+              <span class="legend-item"><i class="dot dot-trap"></i> Trap State (Blokir)</span>
+            </div>
+          </div>
+
+          <!-- Scenario Quick Runner -->
+          <div class="scenario-bar" role="group" aria-label="Skenario Uji Otomatis">
+            <span class="scenario-label">Demo Otomatis:</span>
+            <button type="button" class="btn btn-chip" data-scenario="success">1. PIN Benar</button>
+            <button type="button" class="btn btn-chip" data-scenario="retry_success">2. Salah 2x → Benar</button>
+            <button type="button" class="btn btn-chip btn-chip-danger" data-scenario="bruteforce">3. Salah 3x → Trap Blokir</button>
+            <button type="button" class="btn btn-chip" data-scenario="cancel_flow">4. Batal (Cancel)</button>
+          </div>
+
+          <!-- Live Transition Banner -->
+          <div id="transition-banner" class="transition-banner">
+            <span class="mono banner-formula">δ(q₀, —) = q₀</span>
+            <span class="banner-note">Siap menerima kartu ATM. Klik "Masukkan Kartu" atau pilih skenario demo.</span>
+          </div>
+
+          <!-- Animated SVG Diagram -->
+          <div class="svg-container">
+            <svg id="fsm-svg" viewBox="0 0 780 490" role="img" aria-label="Diagram Transisi Finite State Machine Validasi PIN ATM">
+              <defs>
+                <marker id="arrow-default" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#64748b" />
+                </marker>
+                <marker id="arrow-active" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#38bdf8" />
+                </marker>
+                <marker id="arrow-danger" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#ef4444" />
+                </marker>
+                <marker id="arrow-success" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#10b981" />
+                </marker>
+              </defs>
+
+              <!-- EDGES LAYER -->
+              <g id="edges-layer">
+                <!-- Initial start arrow -->
+                <path id="edge-start-q0" class="fsm-edge edge-init" d="M 100 156 L 100 186" marker-end="url(#arrow-default)" />
+                <text x="100" y="148" class="edge-start-text" text-anchor="middle">START</text>
+
+                <!-- q0 -> q1 (insert_card) -->
+                <path id="edge-q0-q1" class="fsm-edge" d="M 136 230 L 226 230" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q0-q1">
+                  <rect x="142" y="201" width="78" height="19" rx="5" class="label-bg" />
+                  <text x="181" y="214" class="edge-label" text-anchor="middle">insert_card</text>
+                </g>
+
+                <!-- q1 -> q2 (pin_wrong) -->
+                <path id="edge-q1-q2" class="fsm-edge" d="M 306 230 L 396 230" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q1-q2">
+                  <rect x="316" y="201" width="70" height="19" rx="5" class="label-bg" />
+                  <text x="351" y="214" class="edge-label" text-anchor="middle">pin_wrong</text>
+                </g>
+
+                <!-- q2 -> q3 (pin_wrong) -->
+                <path id="edge-q2-q3" class="fsm-edge" d="M 476 230 L 566 230" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q2-q3">
+                  <rect x="486" y="201" width="70" height="19" rx="5" class="label-bg" />
+                  <text x="521" y="214" class="edge-label" text-anchor="middle">pin_wrong</text>
+                </g>
+
+                <!-- q3 -> q6 (pin_wrong 3x -> BLOCKED) -->
+                <path id="edge-q3-q6" class="fsm-edge edge-danger-hint" d="M 615 266 L 622 359" marker-end="url(#arrow-danger)" />
+                <g class="edge-label-group" data-edge="edge-q3-q6">
+                  <rect x="625" y="302" width="90" height="20" rx="5" class="label-bg label-bg-danger" />
+                  <text x="670" y="315" class="edge-label edge-label-danger" text-anchor="middle">pin_wrong (3x)</text>
+                </g>
+
+                <!-- q1 -> q4 (pin_valid) -->
+                <path id="edge-q1-q4" class="fsm-edge edge-success-hint" d="M 294 202 Q 340 128 402 96" marker-end="url(#arrow-success)" />
+                <g class="edge-label-group" data-edge="edge-q1-q4">
+                  <rect x="312" y="118" width="66" height="19" rx="5" class="label-bg label-bg-success" />
+                  <text x="345" y="131" class="edge-label edge-label-success" text-anchor="middle">pin_valid</text>
+                </g>
+
+                <!-- q2 -> q4 (pin_valid) -->
+                <path id="edge-q2-q4" class="fsm-edge edge-success-hint" d="M 440 194 L 440 124" marker-end="url(#arrow-success)" />
+                <g class="edge-label-group" data-edge="edge-q2-q4">
+                  <rect x="407" y="148" width="66" height="19" rx="5" class="label-bg label-bg-success" />
+                  <text x="440" y="161" class="edge-label edge-label-success" text-anchor="middle">pin_valid</text>
+                </g>
+
+                <!-- q3 -> q4 (pin_valid) -->
+                <path id="edge-q3-q4" class="fsm-edge edge-success-hint" d="M 586 202 Q 540 128 478 96" marker-end="url(#arrow-success)" />
+                <g class="edge-label-group" data-edge="edge-q3-q4">
+                  <rect x="518" y="128" width="66" height="19" rx="5" class="label-bg label-bg-success" />
+                  <text x="551" y="141" class="edge-label edge-label-success" text-anchor="middle">pin_valid</text>
+                </g>
+
+                <!-- q1 -> q5 (cancel) -->
+                <path id="edge-q1-q5" class="fsm-edge" d="M 258 264 L 222 365" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q1-q5">
+                  <rect x="214" y="306" width="50" height="18" rx="5" class="label-bg" />
+                  <text x="239" y="318" class="edge-label" text-anchor="middle">cancel</text>
+                </g>
+
+                <!-- q2 -> q5 (cancel) -->
+                <path id="edge-q2-q5" class="fsm-edge" d="M 414 256 Q 350 330 245 382" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q2-q5">
+                  <rect x="315" y="318" width="50" height="18" rx="5" class="label-bg" />
+                  <text x="340" y="330" class="edge-label" text-anchor="middle">cancel</text>
+                </g>
+
+                <!-- q3 -> q5 (cancel) -->
+                <path id="edge-q3-q5" class="fsm-edge" d="M 582 254 Q 445 375 253 402" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q3-q5">
+                  <rect x="413" y="352" width="50" height="18" rx="5" class="label-bg" />
+                  <text x="438" y="364" class="edge-label" text-anchor="middle">cancel</text>
+                </g>
+
+                <!-- q4 -> q5 (cancel / logout) -->
+                <path id="edge-q4-q5" class="fsm-edge" d="M 402 74 C 155 18, 22 150, 174 384" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q4-q5">
+                  <rect x="140" y="64" width="60" height="19" rx="5" class="label-bg" />
+                  <text x="170" y="77" class="edge-label" text-anchor="middle">cancel</text>
+                </g>
+
+                <!-- q5 -> q0 (take_card) -->
+                <path id="edge-q5-q0" class="fsm-edge" d="M 184 378 Q 130 326 112 269" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q5-q0">
+                  <rect x="97" y="325" width="70" height="19" rx="5" class="label-bg" />
+                  <text x="132" y="338" class="edge-label" text-anchor="middle">take_card</text>
+                </g>
+
+                <!-- Self-loops for invalid format & trap state -->
+                <path id="edge-q1-self" class="fsm-edge edge-loop" d="M 248 201 C 212 168, 250 144, 266 193" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q1-self">
+                  <rect x="180" y="146" width="90" height="18" rx="5" class="label-bg" />
+                  <text x="225" y="158" class="edge-label edge-label-muted" text-anchor="middle">pin_invalid_fmt</text>
+                </g>
+
+                <path id="edge-q2-self" class="fsm-edge edge-loop" d="M 465 256 C 498 282, 470 315, 448 269" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q2-self">
+                  <rect x="454" y="282" width="90" height="18" rx="5" class="label-bg" />
+                  <text x="499" y="294" class="edge-label edge-label-muted" text-anchor="middle">pin_invalid_fmt</text>
+                </g>
+
+                <path id="edge-q3-self" class="fsm-edge edge-loop" d="M 636 205 C 674 168, 692 214, 650 226" marker-end="url(#arrow-default)" />
+                <g class="edge-label-group" data-edge="edge-q3-self">
+                  <rect x="646" y="167" width="90" height="18" rx="5" class="label-bg" />
+                  <text x="691" y="179" class="edge-label edge-label-muted" text-anchor="middle">pin_invalid_fmt</text>
+                </g>
+
+                <!-- q6 trap self-loop -->
+                <path id="edge-q6-self" class="fsm-edge edge-danger-hint" d="M 661 391 C 718 372, 718 438, 661 419" marker-end="url(#arrow-danger)" />
+                <g class="edge-label-group" data-edge="edge-q6-self">
+                  <rect x="688" y="395" width="76" height="20" rx="5" class="label-bg label-bg-danger" />
+                  <text x="726" y="408" class="edge-label edge-label-danger" text-anchor="middle">∀ x ∈ Σ</text>
+                </g>
+              </g>
+
+              <!-- NODES LAYER -->
+              <g id="nodes-layer">
+                <!-- q0: IDLE -->
+                <g id="node-IDLE" class="fsm-node is-active" data-state="IDLE">
+                  <circle cx="100" cy="230" r="42" class="node-pulse-ring" />
+                  <circle cx="100" cy="230" r="36" class="node-circle" />
+                  <text x="100" y="224" class="node-code" text-anchor="middle">q₀</text>
+                  <text x="100" y="241" class="node-name" text-anchor="middle">IDLE</text>
+                </g>
+
+                <!-- q1: ATTEMPT_1 -->
+                <g id="node-ATTEMPT_1" class="fsm-node" data-state="ATTEMPT_1">
+                  <circle cx="270" cy="230" r="42" class="node-pulse-ring" />
+                  <circle cx="270" cy="230" r="36" class="node-circle" />
+                  <text x="270" y="224" class="node-code" text-anchor="middle">q₁</text>
+                  <text x="270" y="241" class="node-name" text-anchor="middle">COBA 1/3</text>
+                </g>
+
+                <!-- q2: ATTEMPT_2 -->
+                <g id="node-ATTEMPT_2" class="fsm-node" data-state="ATTEMPT_2">
+                  <circle cx="440" cy="230" r="42" class="node-pulse-ring" />
+                  <circle cx="440" cy="230" r="36" class="node-circle" />
+                  <text x="440" y="224" class="node-code" text-anchor="middle">q₂</text>
+                  <text x="440" y="241" class="node-name" text-anchor="middle">COBA 2/3</text>
+                </g>
+
+                <!-- q3: ATTEMPT_3 -->
+                <g id="node-ATTEMPT_3" class="fsm-node" data-state="ATTEMPT_3">
+                  <circle cx="610" cy="230" r="42" class="node-pulse-ring" />
+                  <circle cx="610" cy="230" r="36" class="node-circle" />
+                  <text x="610" y="224" class="node-code" text-anchor="middle">q₃</text>
+                  <text x="610" y="241" class="node-name" text-anchor="middle">COBA 3/3</text>
+                </g>
+
+                <!-- q4: AUTHENTICATED (Accepting Double Ring) -->
+                <g id="node-AUTHENTICATED" class="fsm-node node-accept" data-state="AUTHENTICATED">
+                  <circle cx="440" cy="78" r="44" class="node-pulse-ring" />
+                  <circle cx="440" cy="78" r="38" class="node-circle" />
+                  <circle cx="440" cy="78" r="32" class="node-inner-ring" />
+                  <text x="440" y="72" class="node-code" text-anchor="middle">q₄</text>
+                  <text x="440" y="89" class="node-name" text-anchor="middle">AKSES SAH</text>
+                </g>
+
+                <!-- q5: CARD_EJECTED (Accepting Exit Double Ring) -->
+                <g id="node-CARD_EJECTED" class="fsm-node node-accept" data-state="CARD_EJECTED">
+                  <circle cx="210" cy="405" r="42" class="node-pulse-ring" />
+                  <circle cx="210" cy="405" r="36" class="node-circle" />
+                  <circle cx="210" cy="405" r="30" class="node-inner-ring" />
+                  <text x="210" y="399" class="node-code" text-anchor="middle">q₅</text>
+                  <text x="210" y="416" class="node-name" text-anchor="middle">EJECTED</text>
+                </g>
+
+                <!-- q6: BLOCKED (Trap State) -->
+                <g id="node-BLOCKED" class="fsm-node node-trap" data-state="BLOCKED">
+                  <circle cx="625" cy="405" r="44" class="node-pulse-ring" />
+                  <circle cx="625" cy="405" r="38" class="node-circle" />
+                  <circle cx="625" cy="405" r="31" class="node-trap-ring" />
+                  <text x="625" y="399" class="node-code" text-anchor="middle">q₆</text>
+                  <text x="625" y="416" class="node-name" text-anchor="middle">BLOCKED</text>
+                </g>
+              </g>
+
+              <!-- ANIMATED PULSE PARTICLE -->
+              <g id="fsm-pulse-layer" class="hidden" aria-hidden="true">
+                <circle id="fsm-pulse-halo" cx="0" cy="0" r="10" fill="rgba(56, 189, 248, 0.22)" />
+                <circle id="fsm-pulse-dot" cx="0" cy="0" r="5" fill="#38bdf8" />
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Academic Inspector Tabs -->
+        <div class="panel inspector-panel">
+          <div class="tabs-header" role="tablist" aria-label="Inspeksi Model FSM">
+            <button type="button" class="tab-btn is-active" role="tab" aria-selected="true" data-tab="tab-table">
+              Tabel Transisi (δ)
+            </button>
+            <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="tab-logs">
+              Log Jejak Eksekusi <span id="log-count-badge" class="count-pill">0</span>
+            </button>
+            <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="tab-formal">
+              Spesifikasi 5-Tuple &amp; Keamanan
+            </button>
+          </div>
+
+          <!-- Tab 1: Transition Table -->
+          <div id="tab-table" class="tab-content is-active" role="tabpanel">
+            <div class="table-wrap">
+              <table class="transition-table" aria-label="Tabel Fungsi Transisi DFA">
+                <thead>
+                  <tr>
+                    <th>State (Q)</th>
+                    <th><code>insert_card</code></th>
+                    <th><code>pin_valid</code></th>
+                    <th><code>pin_wrong</code></th>
+                    <th><code>pin_invalid_fmt</code></th>
+                    <th><code>cancel</code></th>
+                    <th><code>take_card</code></th>
+                  </tr>
+                </thead>
+                <tbody id="transition-table-body">
+                  <!-- Rendered dynamically by app.js from TRANSITION_TABLE -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab 2: Execution Logs -->
+          <div id="tab-logs" class="tab-content" role="tabpanel" hidden>
+            <div class="logs-toolbar">
+              <span class="logs-hint">Riwayat evaluasi fungsi transisi <code>δ(state, input) → nextState</code></span>
+              <div class="logs-actions">
+                <button type="button" id="btn-copy-logs" class="btn btn-sm">Salin Log</button>
+                <button type="button" id="btn-clear-logs" class="btn btn-sm btn-ghost">Bersihkan</button>
+              </div>
+            </div>
+            <div id="logs-list" class="logs-list">
+              <div class="empty-logs">Belum ada transisi tercatat. Mulai dengan memasukkan kartu ATM.</div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Formal 5-Tuple -->
+          <div id="tab-formal" class="tab-content" role="tabpanel" hidden>
+            <div class="formal-grid">
+              <div class="formal-card">
+                <h3>Definisi Formal DFA: <code>M = (Q, Σ, δ, q₀, F)</code></h3>
+                <ul class="formal-list">
+                  <li><strong>Q (States):</strong> <code>{q₀ IDLE, q₁ ATTEMPT_1, q₂ ATTEMPT_2, q₃ ATTEMPT_3, q₄ AUTHENTICATED, q₅ CARD_EJECTED, q₆ BLOCKED}</code></li>
+                  <li><strong>Σ (Alfabet Input):</strong> <code>{insert_card, pin_valid, pin_wrong, pin_invalid_fmt, cancel, take_card}</code></li>
+                  <li><strong>q₀ (State Awal):</strong> <code>q₀ (IDLE)</code></li>
+                  <li><strong>F (Accepting States):</strong> <code>{q₄ (AUTHENTICATED), q₅ (CARD_EJECTED)}</code></li>
+                  <li><strong>δ (Fungsi Transisi):</strong> Pemetaan deterministik total <code>Q × Σ → Q</code></li>
+                </ul>
+              </div>
+              <div class="formal-card formal-security">
+                <h3>Mekanisme Pencegahan Keamanan Akses</h3>
+                <ul class="formal-list">
+                  <li><strong>Anti Brute-Force (Max 3 Percobaan):</strong> Kesalahan PIN menggeser state secara bertahap <code>q₁ → q₂ → q₃ → q₆</code>. Penyerang tidak dapat menebak tanpa batas.</li>
+                  <li><strong>Trap State / Dead State (q₆ BLOCKED):</strong> Setelah masuk ke <code>q₆</code>, setiap simbol input <code>∀ x ∈ Σ</code> hanya berputar kembali ke <code>q₆</code>. Akses terkunci permanen hingga verifikasi Admin Bank.</li>
+                  <li><strong>Validasi Format Input:</strong> Input yang bukan 6 digit angka memicu <code>pin_invalid_fmt</code> (self-loop) sehingga format ilegal ditolak sebelum verifikasi inti.</li>
+                  <li><strong>Fail-Safe Exit:</strong> Tombol <code>cancel</code> langsung mengarahkan sesi ke <code>q₅ (CARD_EJECTED)</code> agar akses tidak dibiarkan terbuka.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script defer src="fsm.js"></script>
+  <script defer src="app.js"></script>
+</body>
+</html>
